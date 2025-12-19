@@ -14,7 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      resumes: {
+        Row: {
+          ats_score: number | null
+          created_at: string
+          education: Json | null
+          experience: Json | null
+          id: string
+          personal_info: Json | null
+          projects: Json | null
+          skills: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ats_score?: number | null
+          created_at?: string
+          education?: Json | null
+          experience?: Json | null
+          id?: string
+          personal_info?: Json | null
+          projects?: Json | null
+          skills?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          ats_score?: number | null
+          created_at?: string
+          education?: Json | null
+          experience?: Json | null
+          id?: string
+          personal_info?: Json | null
+          projects?: Json | null
+          skills?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
