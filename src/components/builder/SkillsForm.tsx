@@ -88,16 +88,24 @@ export const SkillsForm = () => {
       if (error) {
         const anyError = error as any;
         const body = anyError?.context?.body;
+        const status = anyError?.context?.status;
+
         if (typeof body === 'string' && body.trim()) {
           try {
             const parsed = JSON.parse(body);
             const msg = typeof parsed?.error === 'string' ? parsed.error : undefined;
-            throw new Error(msg || anyError.message || 'Skill suggestion failed');
+            throw new Error(msg || anyError?.message || `Skill suggestion failed${typeof status === 'number' ? ` (status ${status})` : ''}`);
           } catch {
-            throw new Error(anyError.message || body || 'Skill suggestion failed');
+            throw new Error(anyError?.message || body || `Skill suggestion failed${typeof status === 'number' ? ` (status ${status})` : ''}`);
           }
         }
-        throw new Error(anyError?.message || 'Skill suggestion failed');
+
+        if (body && typeof body === 'object') {
+          const msg = typeof (body as any)?.error === 'string' ? (body as any).error : undefined;
+          throw new Error(msg || anyError?.message || `Skill suggestion failed${typeof status === 'number' ? ` (status ${status})` : ''}`);
+        }
+
+        throw new Error(anyError?.message || `Skill suggestion failed${typeof status === 'number' ? ` (status ${status})` : ''}`);
       }
 
       const suggested = data?.skills;
@@ -111,7 +119,13 @@ export const SkillsForm = () => {
       toast.success('Skill suggestions added!');
     } catch (error) {
       console.error('Failed to suggest skills:', error);
-      const message = error instanceof Error ? error.message : 'Failed to generate skill suggestions';
+      const anyError = error as any;
+      const message =
+        (error instanceof Error && error.message) ||
+        (typeof anyError?.message === 'string' && anyError.message) ||
+        (typeof anyError?.error === 'string' && anyError.error) ||
+        (typeof anyError?.details === 'string' && anyError.details) ||
+        'Failed to generate skill suggestions';
       toast.error(message);
     } finally {
       setIsSuggesting(false);
