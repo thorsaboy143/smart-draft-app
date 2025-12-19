@@ -374,9 +374,11 @@ const Builder = () => {
                     </span>
                   )}
                 </div>
-                <div className="overflow-auto max-h-[calc(100vh-200px)] rounded-xl border border-border/50 shadow-elegant">
-                  <div className="scale-[0.75] origin-top-left w-[133%]">
-                    <ResumePreview template={selectedTemplate as any} />
+                <div className="rounded-xl border border-border/50 shadow-elegant overflow-hidden">
+                  <div className="overflow-auto max-h-[calc(100vh-200px)]">
+                    <div className="transform scale-[0.6] origin-top">
+                      <ResumePreview template={selectedTemplate as any} />
+                    </div>
                   </div>
                 </div>
               </div>
