@@ -1,3 +1,10 @@
+export {};
+
+declare const Deno: {
+  env: { get: (key: string) => string | undefined };
+  serve: (handler: (req: Request) => Response | Promise<Response>) => void;
+};
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -13,7 +20,23 @@ type ResumePayload = {
   skills?: ResumeSkill[];
 };
 
-Deno.serve(async (req) => {
+function tryParseJsonObject(text: string): unknown {
+  const trimmed = text.trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    // attempt to extract the first JSON object block
+    const start = trimmed.indexOf('{');
+    const end = trimmed.lastIndexOf('}');
+    if (start >= 0 && end > start) {
+      const candidate = trimmed.slice(start, end + 1);
+      return JSON.parse(candidate);
+    }
+    throw new Error('AI returned invalid JSON');
+  }
+}
+
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -124,8 +147,36 @@ Rules:
 
     content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
-    const parsed = JSON.parse(content) as { skills?: ResumeSkill[] };
-    const skills = Array.isArray(parsed?.skills) ? parsed.skills : [];
+    const parsed = tryParseJsonObject(content) as { skills?: ResumeSkill[] };
+    const rawSkills = Array.isArray(parsed?.skills) ? parsed.skills : [];
+
+    // Normalize + dedupe categories/items, and remove items already present
+    const existingSet = new Set(existingSkills.map((s) => s.trim().toLowerCase()));
+    const seenCategory = new Set<string>();
+    const skills: ResumeSkill[] = [];
+    for (const s of rawSkills) {
+      const category = (s?.category ?? '').trim();
+      if (!category) continue;
+      const catKey = category.toLowerCase();
+      if (seenCategory.has(catKey)) continue;
+
+      const items = (s?.items ?? [])
+        .map((i) => (typeof i === 'string' ? i.trim() : ''))
+        .filter(Boolean)
+        .filter((i) => !existingSet.has(i.toLowerCase()));
+
+      const itemSeen = new Set<string>();
+      const uniqueItems = items.filter((i) => {
+        const k = i.toLowerCase();
+        if (itemSeen.has(k)) return false;
+        itemSeen.add(k);
+        return true;
+      });
+
+      if (uniqueItems.length === 0) continue;
+      skills.push({ category, items: uniqueItems });
+      seenCategory.add(catKey);
+    }
 
     return new Response(JSON.stringify({ skills }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

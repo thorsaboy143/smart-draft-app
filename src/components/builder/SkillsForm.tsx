@@ -85,7 +85,20 @@ export const SkillsForm = () => {
         body: { resume },
       });
 
-      if (error) throw error;
+      if (error) {
+        const anyError = error as any;
+        const body = anyError?.context?.body;
+        if (typeof body === 'string' && body.trim()) {
+          try {
+            const parsed = JSON.parse(body);
+            const msg = typeof parsed?.error === 'string' ? parsed.error : undefined;
+            throw new Error(msg || anyError.message || 'Skill suggestion failed');
+          } catch {
+            throw new Error(anyError.message || body || 'Skill suggestion failed');
+          }
+        }
+        throw new Error(anyError?.message || 'Skill suggestion failed');
+      }
 
       const suggested = data?.skills;
       if (!Array.isArray(suggested) || suggested.length === 0) {
@@ -98,7 +111,8 @@ export const SkillsForm = () => {
       toast.success('Skill suggestions added!');
     } catch (error) {
       console.error('Failed to suggest skills:', error);
-      toast.error('Failed to generate skill suggestions');
+      const message = error instanceof Error ? error.message : 'Failed to generate skill suggestions';
+      toast.error(message);
     } finally {
       setIsSuggesting(false);
     }

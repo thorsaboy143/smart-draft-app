@@ -1,3 +1,10 @@
+export {};
+
+declare const Deno: {
+  env: { get: (key: string) => string | undefined };
+  serve: (handler: (req: Request) => Response | Promise<Response>) => void;
+};
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -134,7 +141,7 @@ function calculateATSScore(resume: ResumeData, keywords?: string[]): {
   };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
