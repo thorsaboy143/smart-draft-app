@@ -2,7 +2,7 @@ import { useResume } from '@/context/ResumeContext';
 import { cn } from '@/lib/utils';
 
 interface ResumePreviewProps {
-  template?: 'modern' | 'classic' | 'professional' | 'creative' | 'minimal' | 'elegant';
+  template?: 'modern' | 'classic' | 'professional' | 'creative' | 'minimal' | 'elegant' | 'tech' | 'healthcare' | 'student' | 'entry';
 }
 
 export const ResumePreview = ({ template = 'modern' }: ResumePreviewProps) => {
@@ -45,6 +45,30 @@ export const ResumePreview = ({ template = 'modern' }: ResumePreviewProps) => {
       headerName: 'text-2xl font-bold tracking-wide',
       section: 'mb-5',
       sectionTitle: 'text-amber-700 font-bold text-sm uppercase tracking-wider border-b border-amber-300 pb-1 mb-3',
+    },
+    tech: {
+      header: 'bg-gradient-to-r from-cyan-600 to-teal-500 text-white p-6',
+      headerName: 'text-2xl font-bold font-mono',
+      section: 'border-l-4 border-cyan-500 pl-4 mb-4',
+      sectionTitle: 'text-cyan-600 font-bold text-sm uppercase tracking-wide mb-2 font-mono',
+    },
+    healthcare: {
+      header: 'bg-gradient-to-r from-teal-600 to-green-500 text-white p-6',
+      headerName: 'text-2xl font-bold',
+      section: 'mb-4 border-l-2 border-teal-400 pl-4',
+      sectionTitle: 'text-teal-700 font-bold text-sm uppercase tracking-wide mb-2',
+    },
+    student: {
+      header: 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white p-6 rounded-b-xl',
+      headerName: 'text-2xl font-bold',
+      section: 'mb-4',
+      sectionTitle: 'text-indigo-600 font-bold text-sm uppercase tracking-wide border-b-2 border-indigo-200 pb-1 mb-2',
+    },
+    entry: {
+      header: 'bg-gradient-to-r from-green-600 to-emerald-500 text-white p-6',
+      headerName: 'text-2xl font-bold',
+      section: 'mb-4',
+      sectionTitle: 'text-green-700 font-semibold text-sm uppercase tracking-wide border-b border-green-300 pb-1 mb-2',
     },
   };
 
