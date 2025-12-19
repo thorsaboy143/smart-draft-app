@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useResume } from '@/context/ResumeContext';
 import { generateId, Skill } from '@/types/resume';
-import { Plus, Trash2, Wrench } from 'lucide-react';
+import { Plus, Trash2, Wrench, Sparkles, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const emptySkill: Omit<Skill, 'id'> = {
   category: '',
@@ -13,10 +15,11 @@ const emptySkill: Omit<Skill, 'id'> = {
 };
 
 export const SkillsForm = () => {
-  const { resume, addSkill, updateSkill, removeSkill } = useResume();
+  const { resume, addSkill, updateSkill, removeSkill, updateResume } = useResume();
   const [isAdding, setIsAdding] = useState(false);
   const [newSkill, setNewSkill] = useState(emptySkill);
   const [itemsInput, setItemsInput] = useState('');
+  const [isSuggesting, setIsSuggesting] = useState(false);
 
   const handleAdd = () => {
     if (newSkill.category && newSkill.items.length > 0) {
@@ -41,6 +44,66 @@ export const SkillsForm = () => {
     'Languages',
   ];
 
+  const mergeSuggestedSkills = (existing: Skill[], suggested: Array<{ category: string; items: string[] }>): Skill[] => {
+    const normalize = (value: string) => value.trim().toLowerCase();
+
+    const next: Skill[] = existing.map((s) => ({
+      ...s,
+      items: (s.items ?? []).map((i) => i.trim()).filter(Boolean),
+    }));
+
+    for (const suggestion of suggested) {
+      const category = (suggestion?.category ?? '').trim();
+      const items = (suggestion?.items ?? []).map((i) => i.trim()).filter(Boolean);
+      if (!category || items.length === 0) continue;
+
+      const existingIndex = next.findIndex((s) => normalize(s.category) === normalize(category));
+      if (existingIndex >= 0) {
+        const current = next[existingIndex];
+        const existingSet = new Set(current.items.map(normalize));
+        const mergedItems = [...current.items];
+        for (const item of items) {
+          const key = normalize(item);
+          if (!existingSet.has(key)) {
+            mergedItems.push(item);
+            existingSet.add(key);
+          }
+        }
+        next[existingIndex] = { ...current, category: current.category || category, items: mergedItems };
+      } else {
+        next.push({ id: generateId(), category, items: Array.from(new Set(items.map((i) => i.trim()))).filter(Boolean) });
+      }
+    }
+
+    return next;
+  };
+
+  const suggestSkills = async () => {
+    setIsSuggesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-suggest-skills', {
+        body: { resume },
+      });
+
+      if (error) throw error;
+
+      const suggested = data?.skills;
+      if (!Array.isArray(suggested) || suggested.length === 0) {
+        toast.error('No skill suggestions returned');
+        return;
+      }
+
+      const merged = mergeSuggestedSkills(resume.skills, suggested);
+      updateResume({ skills: merged });
+      toast.success('Skill suggestions added!');
+    } catch (error) {
+      console.error('Failed to suggest skills:', error);
+      toast.error('Failed to generate skill suggestions');
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-sm text-muted-foreground mb-4">
@@ -52,6 +115,20 @@ export const SkillsForm = () => {
             </span>
           ))}
         </div>
+      </div>
+
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={suggestSkills} disabled={isSuggesting}>
+          {isSuggesting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Suggesting…
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 mr-2" /> Suggest skills
+            </>
+          )}
+        </Button>
       </div>
 
       {resume.skills.map((skill) => (
