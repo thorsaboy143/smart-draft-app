@@ -84,7 +84,8 @@ Return ONLY the bullet points, one per line, without bullet symbols or numbering
     });
   } catch (error) {
     console.error('Error in ai-suggest-bullets:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

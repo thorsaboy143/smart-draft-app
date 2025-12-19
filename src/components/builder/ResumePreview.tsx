@@ -2,7 +2,7 @@ import { useResume } from '@/context/ResumeContext';
 import { cn } from '@/lib/utils';
 
 interface ResumePreviewProps {
-  template?: 'modern' | 'classic' | 'professional' | 'creative' | 'minimal';
+  template?: 'modern' | 'classic' | 'professional' | 'creative' | 'minimal' | 'elegant';
 }
 
 export const ResumePreview = ({ template = 'modern' }: ResumePreviewProps) => {
@@ -39,6 +39,12 @@ export const ResumePreview = ({ template = 'modern' }: ResumePreviewProps) => {
       headerName: 'text-3xl font-light',
       section: 'mb-4',
       sectionTitle: 'text-muted-foreground font-medium text-xs uppercase tracking-widest mb-3',
+    },
+    elegant: {
+      header: 'bg-gradient-to-r from-amber-600 to-orange-500 text-white p-6',
+      headerName: 'text-2xl font-bold tracking-wide',
+      section: 'mb-5',
+      sectionTitle: 'text-amber-700 font-bold text-sm uppercase tracking-wider border-b border-amber-300 pb-1 mb-3',
     },
   };
 
