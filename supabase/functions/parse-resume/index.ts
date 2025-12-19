@@ -12,10 +12,12 @@ serve(async (req) => {
 
   try {
     const { resumeText } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const AI_API_KEY = Deno.env.get('AI_API_KEY');
+    const AI_BASE_URL = Deno.env.get('AI_BASE_URL') ?? 'https://api.openai.com/v1/chat/completions';
+    const AI_MODEL = Deno.env.get('AI_MODEL') ?? 'gpt-4o-mini';
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    if (!AI_API_KEY) {
+      throw new Error('AI_API_KEY is not configured');
     }
 
     console.log('Parsing resume text, length:', resumeText?.length);
@@ -82,14 +84,14 @@ ${resumeText}
 
 Return ONLY valid JSON, no markdown formatting or code blocks.`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch(AI_BASE_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${AI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: AI_MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -99,7 +101,7 @@ Return ONLY valid JSON, no markdown formatting or code blocks.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
+      console.error('AI request error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
@@ -113,7 +115,7 @@ Return ONLY valid JSON, no markdown formatting or code blocks.`;
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      throw new Error('AI gateway error');
+      throw new Error('AI request failed');
     }
 
     const data = await response.json();
