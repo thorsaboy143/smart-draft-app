@@ -42,13 +42,20 @@ const templates = [
     preview: 'border-b border-muted',
     colors: ['bg-gray-400', 'bg-gray-500', 'bg-gray-600'],
   },
+  {
+    id: 'elegant',
+    name: 'Elegant',
+    description: 'Warm amber gradient, professional look',
+    preview: 'bg-gradient-to-r from-amber-500/30 to-orange-400/20',
+    colors: ['bg-amber-600', 'bg-orange-500', 'bg-amber-700'],
+  },
 ];
 
 export const TemplateSelector = ({ selected, onSelect }: TemplateSelectorProps) => {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Choose a Template</h3>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {templates.map((template) => (
           <button
             key={template.id}
