@@ -12,6 +12,7 @@ import { SkillsForm } from '@/components/builder/SkillsForm';
 import { ResumePreview } from '@/components/builder/ResumePreview';
 import { TemplateSelector } from '@/components/builder/TemplateSelector';
 import { ImportResumeDialog } from '@/components/builder/ImportResumeDialog';
+import { JobOptimizer } from '@/components/builder/JobOptimizer';
 import { useResume } from '@/context/ResumeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -27,7 +28,8 @@ import {
   Eye,
   Upload,
   FileCheck,
-  Loader2
+  Loader2,
+  Target
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -319,17 +321,23 @@ const Builder = () => {
                 </Button>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={checkATSScore}>
+                  <JobOptimizer>
+                    <Button variant="outline" size="sm">
+                      <Target className="w-4 h-4 mr-2" />
+                      Optimize for Job
+                    </Button>
+                  </JobOptimizer>
+                  <Button variant="outline" size="sm" onClick={checkATSScore}>
                     <FileCheck className="w-4 h-4 mr-2" />
-                    Check ATS Score
+                    ATS Score
                   </Button>
-                  <Button variant="outline" onClick={handleSave} disabled={isSaving}>
+                  <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
                     {isSaving ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <Save className="w-4 h-4 mr-2" />
                     )}
-                    Save Draft
+                    Save
                   </Button>
                 </div>
 
