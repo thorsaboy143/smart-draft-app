@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,8 @@ import { ExperienceForm } from '@/components/builder/ExperienceForm';
 import { ProjectsForm } from '@/components/builder/ProjectsForm';
 import { SkillsForm } from '@/components/builder/SkillsForm';
 import { ResumePreview } from '@/components/builder/ResumePreview';
-import { TemplateSelector } from '@/components/builder/TemplateSelector';
+import { TemplateSelector, getDefaultTemplateAccent } from '@/components/builder/TemplateSelector';
+import type { ResumeTemplate, ResumeTemplateAccent } from '@/components/builder/TemplateSelector';
 import { ImportResumeDialog } from '@/components/builder/ImportResumeDialog';
 import { JobOptimizer } from '@/components/builder/JobOptimizer';
 import { useResume } from '@/context/ResumeContext';
@@ -45,10 +46,15 @@ const steps = [
 
 const Builder = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  const [selectedTemplate, setSelectedTemplate] = useState<ResumeTemplate>('modern');
+  const [selectedAccent, setSelectedAccent] = useState<ResumeTemplateAccent>(getDefaultTemplateAccent('modern'));
   const [showPreview, setShowPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const { resume, calculateProgress, saveToDatabase, isSaving, updateResume } = useResume();
+
+  useEffect(() => {
+    setSelectedAccent(getDefaultTemplateAccent(selectedTemplate));
+  }, [selectedTemplate]);
 
   const progress = calculateProgress();
 
@@ -251,9 +257,9 @@ const Builder = () => {
         {/* Progress Bar */}
         <div className="border-b border-border bg-card/50">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
               <h1 className="text-xl font-semibold">Resume Builder</h1>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-3 sm:justify-end">
                 <ImportResumeDialog>
                   <Button variant="outline" size="sm">
                     <Upload className="w-4 h-4 mr-2" />
@@ -270,7 +276,12 @@ const Builder = () => {
         {/* Template Selector */}
         <div className="border-b border-border bg-card/30">
           <div className="container mx-auto px-4 py-6">
-            <TemplateSelector selected={selectedTemplate} onSelect={setSelectedTemplate} />
+            <TemplateSelector
+              selected={selectedTemplate}
+              onSelect={setSelectedTemplate}
+              selectedAccent={selectedAccent}
+              onAccentSelect={setSelectedAccent}
+            />
           </div>
         </div>
 
@@ -280,14 +291,15 @@ const Builder = () => {
             {/* Form Section */}
             <div className="space-y-6">
               {/* Step Navigation */}
-              <div className="flex items-center justify-between bg-card rounded-xl p-2 border border-border/50">
+              <div className="bg-card rounded-xl p-2 border border-border/50 overflow-x-auto">
+                <div className="flex items-center gap-2 min-w-max">
                 {steps.map((step, index) => {
                   const Icon = step.icon;
                   return (
                     <button
                       key={step.id}
                       onClick={() => setCurrentStep(index)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all shrink-0 ${
                         currentStep === index 
                           ? 'bg-primary text-primary-foreground' 
                           : 'hover:bg-muted text-muted-foreground'
@@ -298,6 +310,7 @@ const Builder = () => {
                     </button>
                   );
                 })}
+                </div>
               </div>
 
               {/* Form Content */}
@@ -310,7 +323,7 @@ const Builder = () => {
               </div>
 
               {/* Navigation Buttons */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Button
                   variant="outline"
                   onClick={handlePrev}
@@ -320,7 +333,7 @@ const Builder = () => {
                   Previous
                 </Button>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 sm:justify-center">
                   <JobOptimizer>
                     <Button variant="outline" size="sm">
                       <Target className="w-4 h-4 mr-2" />
@@ -377,7 +390,7 @@ const Builder = () => {
                 <div className="rounded-xl border border-border/50 shadow-elegant overflow-hidden">
                   <div className="overflow-auto max-h-[calc(100vh-200px)]">
                     <div className="transform scale-[0.6] origin-top">
-                      <ResumePreview template={selectedTemplate as any} />
+                      <ResumePreview template={selectedTemplate} accent={selectedAccent} />
                     </div>
                   </div>
                 </div>
@@ -407,7 +420,9 @@ const Builder = () => {
                     Close
                   </Button>
                 </div>
-                <ResumePreview template={selectedTemplate as any} />
+                <div className="overflow-x-auto">
+                  <ResumePreview template={selectedTemplate} accent={selectedAccent} />
+                </div>
               </div>
             </div>
           )}

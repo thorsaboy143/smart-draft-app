@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,74 @@ export const ImportResumeDialog = ({ children }: ImportResumeDialogProps) => {
   const [open, setOpen] = useState(false);
   const [resumeText, setResumeText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { updateResume } = useResume();
+
+  const parseAndApplyResumeText = async (text: string) => {
+    const { data, error } = await supabase.functions.invoke('parse-resume', {
+      body: { resumeText: text },
+    });
+
+    if (error) throw error;
+
+    if (data?.resume) {
+      updateResume(data.resume);
+      toast.success('Resume imported successfully!');
+      setOpen(false);
+      setResumeText('');
+    } else {
+      toast.error('Could not extract resume data');
+    }
+  };
+
+  const extractTextFromPdf = async (file: File): Promise<string> => {
+    const pdfjsLib: any = await import('pdfjs-dist');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url
+    ).toString();
+
+    const data = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data }).promise;
+
+    let text = '';
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const content = await page.getTextContent();
+      const pageText = (content.items as any[])
+        .map((item) => (typeof item?.str === 'string' ? item.str : ''))
+        .filter(Boolean)
+        .join(' ');
+      text += `${pageText}\n`;
+    }
+
+    return text;
+  };
+
+  const handlePdfFile = async (file: File) => {
+    if (file.type !== 'application/pdf') {
+      toast.error('Please select a PDF file');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const extracted = await extractTextFromPdf(file);
+      if (!extracted.trim()) {
+        toast.error('Could not read text from this PDF');
+        return;
+      }
+
+      setResumeText(extracted);
+      await parseAndApplyResumeText(extracted);
+    } catch (error) {
+      console.error('Failed to import PDF resume:', error);
+      toast.error('Failed to import PDF. Please try again.');
+    } finally {
+      setIsProcessing(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleImport = async () => {
     if (!resumeText.trim()) {
@@ -33,18 +100,7 @@ export const ImportResumeDialog = ({ children }: ImportResumeDialogProps) => {
 
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('parse-resume', {
-        body: { resumeText }
-      });
-
-      if (error) throw error;
-
-      if (data?.resume) {
-        updateResume(data.resume);
-        toast.success('Resume imported successfully!');
-        setOpen(false);
-        setResumeText('');
-      }
+      await parseAndApplyResumeText(resumeText);
     } catch (error) {
       console.error('Failed to parse resume:', error);
       toast.error('Failed to parse resume. Please try again.');
@@ -70,11 +126,47 @@ export const ImportResumeDialog = ({ children }: ImportResumeDialogProps) => {
             Import Your Existing Resume
           </DialogTitle>
           <DialogDescription>
-            Paste your existing resume text below and we'll automatically extract the information to fill your new resume.
+            Upload a resume PDF or paste resume text, and we'll extract the information to fill your new resume.
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Upload PDF</Label>
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handlePdfFile(file);
+                }}
+                disabled={isProcessing}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessing}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Choose PDF
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Upload a resume PDF to auto-fill.
+              </p>
+            </div>
+          </div>
+
+          <div className="relative py-2">
+            <div className="h-px bg-border" />
+            <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+              OR
+            </span>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="resume-text">Resume Content</Label>
             <Textarea
