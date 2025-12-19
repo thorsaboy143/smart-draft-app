@@ -12,7 +12,7 @@ const templates = [
     name: 'Modern',
     description: 'Clean design with accent color header',
     preview: 'bg-gradient-to-b from-primary/20 to-transparent',
-    colors: ['bg-primary', 'bg-blue-500', 'bg-green-500', 'bg-purple-500'],
+    colors: ['bg-primary', 'bg-blue-500', 'bg-green-500'],
   },
   {
     id: 'classic',
@@ -49,13 +49,41 @@ const templates = [
     preview: 'bg-gradient-to-r from-amber-500/30 to-orange-400/20',
     colors: ['bg-amber-600', 'bg-orange-500', 'bg-amber-700'],
   },
+  {
+    id: 'tech',
+    name: 'Tech',
+    description: 'Modern tech industry style with cyan accents',
+    preview: 'bg-gradient-to-b from-cyan-500/30 to-transparent',
+    colors: ['bg-cyan-500', 'bg-teal-500', 'bg-emerald-500'],
+  },
+  {
+    id: 'healthcare',
+    name: 'Healthcare',
+    description: 'Clean medical professional design',
+    preview: 'bg-gradient-to-b from-teal-500/25 to-transparent',
+    colors: ['bg-teal-600', 'bg-green-600', 'bg-blue-500'],
+  },
+  {
+    id: 'student',
+    name: 'Student',
+    description: 'Fresh and energetic for new graduates',
+    preview: 'bg-gradient-to-r from-indigo-400/25 to-pink-400/20',
+    colors: ['bg-indigo-500', 'bg-pink-500', 'bg-violet-500'],
+  },
+  {
+    id: 'entry',
+    name: 'Entry Level',
+    description: 'Simple and impactful for first jobs',
+    preview: 'bg-gradient-to-b from-green-500/25 to-transparent',
+    colors: ['bg-green-600', 'bg-lime-500', 'bg-emerald-600'],
+  },
 ];
 
 export const TemplateSelector = ({ selected, onSelect }: TemplateSelectorProps) => {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Choose a Template</h3>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {templates.map((template) => (
           <button
             key={template.id}
