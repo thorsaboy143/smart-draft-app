@@ -26,12 +26,41 @@ export const ImportResumeDialog = ({ children }: ImportResumeDialogProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { updateResume } = useResume();
 
+  const getFunctionInvokeErrorMessage = (err: unknown, fallback: string) => {
+    const anyError = err as any;
+    const body = anyError?.context?.body;
+    const status = anyError?.context?.status;
+
+    if (status === 429 && (!body || (typeof body === 'string' && !body.trim()))) {
+      return 'AI quota/rate limit exceeded. Please check your plan/billing and try again.';
+    }
+
+    if (typeof body === 'string' && body.trim()) {
+      try {
+        const parsed = JSON.parse(body);
+        const msg = typeof parsed?.error === 'string' ? parsed.error : undefined;
+        return msg || anyError?.message || fallback;
+      } catch {
+        return anyError?.message || body || fallback;
+      }
+    }
+
+    if (body && typeof body === 'object') {
+      const msg = typeof (body as any)?.error === 'string' ? (body as any).error : undefined;
+      return msg || anyError?.message || fallback;
+    }
+
+    return anyError?.message || fallback;
+  };
+
   const parseAndApplyResumeText = async (text: string) => {
     const { data, error } = await supabase.functions.invoke('parse-resume', {
       body: { resumeText: text },
     });
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(getFunctionInvokeErrorMessage(error, 'Failed to parse resume'));
+    }
 
     if (data?.resume) {
       updateResume(data.resume);
@@ -85,7 +114,10 @@ export const ImportResumeDialog = ({ children }: ImportResumeDialogProps) => {
       await parseAndApplyResumeText(extracted);
     } catch (error) {
       console.error('Failed to import PDF resume:', error);
-      toast.error('Failed to import PDF. Please try again.');
+      const message =
+        (error instanceof Error && error.message) ||
+        getFunctionInvokeErrorMessage(error, 'Failed to import PDF. Please try again.');
+      toast.error(message);
     } finally {
       setIsProcessing(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -103,7 +135,10 @@ export const ImportResumeDialog = ({ children }: ImportResumeDialogProps) => {
       await parseAndApplyResumeText(resumeText);
     } catch (error) {
       console.error('Failed to parse resume:', error);
-      toast.error('Failed to parse resume. Please try again.');
+      const message =
+        (error instanceof Error && error.message) ||
+        getFunctionInvokeErrorMessage(error, 'Failed to parse resume. Please try again.');
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }

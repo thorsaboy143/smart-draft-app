@@ -90,6 +90,10 @@ export const SkillsForm = () => {
         const body = anyError?.context?.body;
         const status = anyError?.context?.status;
 
+        if (status === 429 && (!body || (typeof body === 'string' && !body.trim()))) {
+          throw new Error('AI quota/rate limit exceeded. Please check your plan/billing and try again.');
+        }
+
         if (typeof body === 'string' && body.trim()) {
           try {
             const parsed = JSON.parse(body);

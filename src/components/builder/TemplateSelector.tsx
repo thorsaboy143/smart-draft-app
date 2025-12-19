@@ -178,9 +178,10 @@ export const TemplateSelector = ({ selected, onSelect, selectedAccent, onAccentS
               {template.accents.slice(0, 4).map((accent) => {
                 const isSelected = selected === template.id && selectedAccent === accent.id;
                 return (
-                  <button
+                  <span
                     key={accent.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     aria-label={`Select ${template.name} color ${accent.id}`}
                     onClick={(e) => {
                       e.preventDefault();
@@ -188,8 +189,16 @@ export const TemplateSelector = ({ selected, onSelect, selectedAccent, onAccentS
                       onSelect(template.id);
                       onAccentSelect(accent.id);
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onSelect(template.id);
+                        onAccentSelect(accent.id);
+                      }
+                    }}
                     className={cn(
-                      'w-4 h-4 rounded-full border border-border/60',
+                      'inline-block w-4 h-4 rounded-full border border-border/60 cursor-pointer',
                       accent.swatch,
                       isSelected && 'ring-2 ring-foreground ring-offset-2 ring-offset-background'
                     )}
